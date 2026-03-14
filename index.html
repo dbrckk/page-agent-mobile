@@ -93,6 +93,11 @@
       cursor: pointer;
     }
 
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
     .primary {
       background: var(--primary);
       color: white;
@@ -176,9 +181,7 @@
     </div>
   </div>
 
-  <script type="module">
-    import { PageAgent } from "https://esm.sh/page-agent@1.5.7";
-
+  <script>
     const apiKeyEl = document.getElementById("apiKey");
     const modelEl = document.getElementById("model");
     const taskEl = document.getElementById("task");
@@ -191,14 +194,24 @@
     const STORAGE_KEY = "groq_api_key_page_agent";
 
     const savedKey = localStorage.getItem(STORAGE_KEY);
-    if (savedKey) apiKeyEl.value = savedKey;
+    if (savedKey) {
+      apiKeyEl.value = savedKey;
+    }
 
     demoBtn.addEventListener("click", () => {
       taskEl.value = "Analyse cette page, liste les champs et boutons importants, puis explique en 5 points ce que tu peux faire ici.";
+      statusEl.textContent = "Exemple chargé.";
     });
 
     saveBtn.addEventListener("click", () => {
-      localStorage.setItem(STORAGE_KEY, apiKeyEl.value.trim());
+      const apiKey = apiKeyEl.value.trim();
+
+      if (!apiKey) {
+        statusEl.textContent = "Aucune clé à sauvegarder.";
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEY, apiKey);
       statusEl.textContent = "Clé sauvegardée dans le navigateur.";
     });
 
@@ -207,6 +220,32 @@
       apiKeyEl.value = "";
       statusEl.textContent = "Clé supprimée du navigateur.";
     });
+
+    async function loadPageAgent() {
+      statusEl.textContent = "Chargement de Page Agent...";
+
+      if (window.PageAgent) {
+        return window.PageAgent;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/page-agent@1.5.7/dist/iife/page-agent.demo.js";
+      script.crossOrigin = "anonymous";
+
+      const loaded = new Promise((resolve, reject) => {
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Impossible de charger Page Agent depuis le CDN."));
+      });
+
+      document.head.appendChild(script);
+      await loaded;
+
+      if (!window.PageAgent) {
+        throw new Error("PageAgent est introuvable après chargement.");
+      }
+
+      return window.PageAgent;
+    }
 
     runBtn.addEventListener("click", async () => {
       const apiKey = apiKeyEl.value.trim();
@@ -227,7 +266,11 @@
       statusEl.textContent = "Initialisation...";
 
       try {
-        const agent = new PageAgent({
+        const PageAgentClass = await loadPageAgent();
+
+        statusEl.textContent = "Création de l'agent...";
+
+        const agent = new PageAgentClass({
           model,
           baseURL: "https://api.groq.com/openai/v1",
           apiKey,
@@ -235,6 +278,7 @@
         });
 
         statusEl.textContent = "Exécution en cours...";
+
         const result = await agent.execute(task);
 
         if (typeof result === "string") {
@@ -250,4 +294,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
