@@ -1,1 +1,134 @@
 
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Page Agent Mobile</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #0b1020;
+      color: #f5f7fb;
+    }
+    .card {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #151b2f;
+      border: 1px solid #2b365d;
+      border-radius: 16px;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 22px;
+      margin-top: 0;
+    }
+    p {
+      line-height: 1.5;
+      color: #d2daf0;
+    }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      border-radius: 12px;
+      border: 1px solid #3b4a7d;
+      background: #0f1528;
+      color: #fff;
+      padding: 12px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .primary {
+      background: #4f7cff;
+      color: white;
+    }
+    .secondary {
+      background: #263252;
+      color: white;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #a9b7df;
+      white-space: pre-wrap;
+    }
+    .hint {
+      font-size: 13px;
+      color: #93a3d2;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Page Agent sur smartphone</h1>
+    <p>
+      Cette page charge Page Agent dans le navigateur. Utilise-la sur le site où tu veux lancer des actions.
+    </p>
+
+    <textarea id="task" placeholder="Exemple : remplis ce formulaire avec les champs visibles, puis résume les valeurs avant validation."></textarea>
+
+    <div class="row">
+      <button class="primary" id="runBtn">Lancer</button>
+      <button class="secondary" id="demoBtn">Exemple</button>
+    </div>
+
+    <div id="status">Prêt.</div>
+    <div class="hint">
+      Version simple : utilise le script officiel de démo Page Agent. C’est pratique pour tester, mais la doc le réserve à l’évaluation technique.
+    </div>
+  </div>
+
+  <!-- Script de démo officiel Page Agent -->
+  <script src="https://cdn.jsdelivr.net/npm/page-agent@1.5.7/dist/iife/page-agent.demo.js" crossorigin="true"></script>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const taskEl = document.getElementById("task");
+    const runBtn = document.getElementById("runBtn");
+    const demoBtn = document.getElementById("demoBtn");
+
+    demoBtn.addEventListener("click", () => {
+      taskEl.value = "Analyse la page actuelle, identifie les boutons et champs importants, puis explique-moi ce que tu peux faire ici en 5 points.";
+    });
+
+    runBtn.addEventListener("click", async () => {
+      const task = taskEl.value.trim();
+      if (!task) {
+        statusEl.textContent = "Écris d'abord une instruction.";
+        return;
+      }
+
+      try {
+        statusEl.textContent = "Initialisation de Page Agent...";
+        const agent = new window.PageAgent();
+
+        statusEl.textContent = "Exécution en cours...";
+        const result = await agent.execute(task);
+
+        statusEl.textContent =
+          typeof result === "string"
+            ? result
+            : JSON.stringify(result, null, 2);
+      } catch (err) {
+        statusEl.textContent = "Erreur : " + (err?.message || String(err));
+      }
+    });
+  </script>
+</body>
+</html>
